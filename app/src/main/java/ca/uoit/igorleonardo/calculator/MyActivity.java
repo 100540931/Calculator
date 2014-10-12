@@ -2,6 +2,7 @@ package ca.uoit.igorleonardo.calculator;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -9,13 +10,15 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import java.text.DecimalFormatSymbols;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 
 public class MyActivity extends Activity {
 
     private String currentDisplay = "";
     private final String currentDisplayTag = "";
-    private String operators = "-+*/";
+    private String operators = "-+×÷";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +56,7 @@ public class MyActivity extends Activity {
     public void buttonPressed(View view) {
         Button bPressed = (Button)view;
         String bValue = bPressed.getText().toString();
+        String lastInput = getLastInput();
         TextView displayText = (TextView) findViewById(R.id.display);
 
         // "point" control
@@ -60,92 +64,120 @@ public class MyActivity extends Activity {
             String[] exprs = getExpressions(currentDisplay);
             String lastExpr = exprs[exprs.length-1];
             if(checkPoint(lastExpr)){
-                if(getLastInput().equals("") || operators.contains(getLastInput())){
+                if(getLastInput().equals("") || operators.contains(lastInput)){
                     displayText.append("0");
                 }
             } else bValue = "";
         }
 
         // operators control
-
-        /*if( ((lastInput.equals("+") || lastInput.equals("-")) && bValue.equals("-")) ||
-                lastInput.equals("+") && bValue.equals("+") ){
-            backspace(view);
-        } else if((lastInput.equals("-") && bValue.equals("+")) ||
-                (lastInput.equals("") && bValue.equals("+"))    ||
-                (lastInput.equals(".") && bValue.equals("."))   ){
-            bValue = "";
-        }*/
-
-        //regex to replace consecutive points, check result
+        if(!bValue.isEmpty() && operators.contains(bValue)){
+            if(!bValue.equals("-") && (currentDisplay.equals("-") || currentDisplay.equals(""))){
+                backspace(view);
+                bValue = "";
+            } else {
+                if(currentDisplay.length()>2 && (getLastInput(2).contains("÷-") || getLastInput(2).contains("×-")))
+                    backspace(view);
+                if((operators.contains(lastInput) && !((lastInput.equals("×") || lastInput.equals("÷")) && bValue.equals("-"))) || lastInput.equals("."))
+                    backspace(view);
+            }
+        }
 
         displayText.append(bValue);
         currentDisplay = displayText.getText().toString();
     }
 
     public void result(View view) {
-        float number1, number2;
-        Character operator;
+        float number1, number2, result;
         TextView displayText = (TextView) findViewById(R.id.display);
-        String[] exprs = getExpressions(currentDisplay);
+        ArrayList<String> exprs;
 
-        switch(exprs.length){
-            case 3:
-                // eg.: [1.5, *, 4.2]
-                number1 = Float.parseFloat(exprs[0]);
-                operator = exprs[1].charAt(0);
-                number2 = Float.parseFloat(exprs[2]);
-                break;
-            case 4:
-                // eg.: [1.5, *, -, 4.2]
-                number1 = Float.parseFloat(exprs[0]);
-                operator = exprs[1].charAt(0);
-                number2 = Float.parseFloat(exprs[2] + exprs[3]);
-                break;
-            case 5:
-                // eg.: [, -, 1.5, *, 4.2]
-                number1 = Float.parseFloat(exprs[1] + exprs[2]);
-                operator = exprs[3].charAt(0);
-                number2 = Float.parseFloat(exprs[4]);
-                break;
-            case 6:
-                // eg.: [, -, 1.5, *, -, 4.2]
-                number1 = Float.parseFloat(exprs[1] + exprs[2]);
-                operator = exprs[3].charAt(0);
-                number2 = Float.parseFloat(exprs[4] + exprs[5]);
-                break;
-            default:
-                throw new RuntimeException("Unknow equation format.");
+        exprs = treatExpressions(getExpressions(currentDisplay));
+
+        while(exprs.size() != 1){
+            int i;
+            while ((i=exprs.indexOf("×")) != -1) {
+                number1 = Float.parseFloat(exprs.get(i-1));
+                number2 = Float.parseFloat(exprs.get(i+1));
+                exprs.set(i, Float.toString(number1 * number2));
+                exprs.remove(i+1);
+                exprs.remove(i-1);
+            }
+            while ((i=exprs.indexOf("÷")) != -1) {
+                number1 = Float.parseFloat(exprs.get(i-1));
+                number2 = Float.parseFloat(exprs.get(i+1));
+                exprs.set(i, Float.toString(number1 / number2));
+                exprs.remove(i+1);
+                exprs.remove(i-1);
+            }
+            while ((i=exprs.indexOf("+")) != -1) {
+                number1 = Float.parseFloat(exprs.get(i-1));
+                number2 = Float.parseFloat(exprs.get(i+1));
+                exprs.set(i, Float.toString(number1 + number2));
+                exprs.remove(i+1);
+                exprs.remove(i-1);
+            }
+            while ((i=exprs.indexOf("-")) != -1) {
+                number1 = Float.parseFloat(exprs.get(i-1));
+                number2 = Float.parseFloat(exprs.get(i+1));
+                exprs.set(i, Float.toString(number1 - number2));
+                exprs.remove(i+1);
+                exprs.remove(i-1);
+            }
         }
 
-        switch(operator){
+        /*switch(operator){
             case '+':
                 displayText.setText(Float.toString(number1 + number2));
                 break;
             case '-':
                 displayText.setText(Float.toString(number1-number2));
                 break;
-            case '*':
+            case '×':
                 displayText.setText(Float.toString(number1*number2));
                 break;
-            case '/':
+            case '÷':
                 if(number2 == 0)
                     displayText.setText(DecimalFormatSymbols.getInstance().getInfinity());
                 else {
                     displayText.setText(Float.toString(number1 / number2));
                 }
                 break;
-            default:
-                throw new RuntimeException("Unknow operator.");
-        }
-
-        /*if (value == Math.round(value)) {
-            Inteiro
-        } else {
-            float
         }*/
 
-        currentDisplay = displayText.getText().toString();
+        result = Float.parseFloat(exprs.get(0));
+        if (result == (int)result) {
+            exprs.set(0, Integer.toString((int)result));
+        }
+
+        displayText.setText(exprs.get(0));
+        currentDisplay = exprs.get(0);
+    }
+
+    private ArrayList<String> treatExpressions(String[] exprs) {
+        ArrayList<String> expr1 = new ArrayList<String>(Arrays.asList(exprs));
+
+        if(expr1.get(0).isEmpty())
+            expr1.remove(0);
+        if(expr1.get(0).equals("-")) {
+            expr1.set(1, "-".concat(expr1.get(1)));
+            expr1.remove(0);
+        }
+
+        int size = expr1.size();
+
+        for(int i = expr1.indexOf("-"); i!=-1 && i<size; i++){
+            String actual = expr1.get(i);
+            String prev = expr1.get(i-1);
+
+            if(actual.equals("-") && (prev.equals("×") || prev.equals("÷"))){
+                expr1.set(i+1, actual.concat(expr1.get(i+1)));
+                expr1.remove(i);
+                size--;
+            }
+        }
+
+        return expr1;
     }
 
     public void backspace(View view) {
@@ -178,5 +210,9 @@ public class MyActivity extends Activity {
 
     public String getLastInput(){
         return (currentDisplay.length() >= 1) ? currentDisplay.substring(currentDisplay.length() - 1, currentDisplay.length()) : "";
+    }
+
+    public String getLastInput(int length){
+        return (currentDisplay.length() >= length) ? currentDisplay.substring(currentDisplay.length() - length, currentDisplay.length()) : getLastInput();
     }
 }
