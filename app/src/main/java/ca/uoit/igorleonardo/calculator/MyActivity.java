@@ -1,13 +1,14 @@
 package ca.uoit.igorleonardo.calculator;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.content.DialogInterface;
 
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
@@ -16,9 +17,11 @@ import java.util.Arrays;
 
 public class MyActivity extends Activity {
 
+    private String operators = "-+×÷";
+    private final String historyTag = "";
+    public ArrayList<String> history = new ArrayList<String>();
     private String currentDisplay = "";
     private final String currentDisplayTag = "";
-    private String operators = "-+×÷";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,12 +31,14 @@ public class MyActivity extends Activity {
             currentDisplay = savedInstanceState.getString(currentDisplayTag);
             TextView textView = (TextView) findViewById(R.id.display);
             textView.setText(currentDisplay);
+            history = savedInstanceState.getStringArrayList(historyTag);
         }
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState){
         outState.putString(currentDisplayTag, currentDisplay);
+        outState.putStringArrayList(historyTag, history);
         super.onSaveInstanceState(outState);
     }
 
@@ -50,7 +55,47 @@ public class MyActivity extends Activity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        return id == R.id.action_settings || super.onOptionsItemSelected(item);
+        switch (id) {
+            case R.id.action_history:
+                showHistory();
+                break;
+            case R.id.action_credits:
+                showCredits();
+                break;
+            case R.id.action_quit:
+                finish();
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void showHistory() {
+        final String[] items = history.toArray(new String[history.size()]);
+
+        new AlertDialog.Builder(this)
+            .setTitle("History")
+            .setItems(items, new DialogInterface.OnClickListener(){
+                public void onClick(DialogInterface dialog, int item){
+                }
+            })
+            .setPositiveButton("Close", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            })
+            .show();
+    }
+
+    private void showCredits() {
+        new AlertDialog.Builder(this)
+            .setTitle("Credits - Assignment 1")
+            .setMessage("CSCI4100U Mobile Devices\nApp: Calculator\n\nStudent: Igor Melo\nSID: 100540931")
+            .setPositiveButton("Close", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            })
+            .show();
     }
 
     public void buttonPressed(View view) {
@@ -60,17 +105,19 @@ public class MyActivity extends Activity {
         TextView displayText = (TextView) findViewById(R.id.display);
 
         // "point" control
+        // handle multiples attempts to input "."
         if(bValue.equals(".")){
             String[] exprs = getExpressions(currentDisplay);
             String lastExpr = exprs[exprs.length-1];
             if(checkPoint(lastExpr)){
-                if(getLastInput().equals("") || operators.contains(lastInput)){
+                if(lastInput.equals("") || operators.contains(lastInput)){
                     displayText.append("0");
                 }
             } else bValue = "";
         }
 
         // operators control
+        // handle operators to avoid malformed input
         if(!bValue.isEmpty() && operators.contains(bValue)){
             if(!bValue.equals("-") && (currentDisplay.equals("-") || currentDisplay.equals(""))){
                 backspace(view);
@@ -83,93 +130,94 @@ public class MyActivity extends Activity {
             }
         }
 
+        // update display and current display varibale
         displayText.append(bValue);
         currentDisplay = displayText.getText().toString();
     }
 
     public void result(View view) {
-        float number1, number2, result;
+        Float number1, number2, result;
         TextView displayText = (TextView) findViewById(R.id.display);
         ArrayList<String> exprs;
 
         exprs = treatExpressions(getExpressions(currentDisplay));
 
+        result = null;
         while(exprs.size() != 1){
             int i;
-            while ((i=exprs.indexOf("×")) != -1) {
+
+            // Operator order: Multiplication, Division, Addition, Subtraction
+            if((i=exprs.indexOf("×")) != -1) {
                 number1 = Float.parseFloat(exprs.get(i-1));
                 number2 = Float.parseFloat(exprs.get(i+1));
-                exprs.set(i, Float.toString(number1 * number2));
-                exprs.remove(i+1);
-                exprs.remove(i-1);
+                result = number1 * number2;
+            } else if((i=exprs.indexOf("÷")) != -1) {
+                number1 = Float.parseFloat(exprs.get(i-1));
+                number2 = Float.parseFloat(exprs.get(i+1));
+                result = number1 / number2;
+            } else if((i=exprs.indexOf("+")) != -1) {
+                number1 = Float.parseFloat(exprs.get(i-1));
+                number2 = Float.parseFloat(exprs.get(i+1));
+                result = number1 + number2;
+            } else if((i=exprs.indexOf("-")) != -1) {
+                number1 = Float.parseFloat(exprs.get(i-1));
+                number2 = Float.parseFloat(exprs.get(i+1));
+                result = number1 - number2;
             }
-            while ((i=exprs.indexOf("÷")) != -1) {
-                number1 = Float.parseFloat(exprs.get(i-1));
-                number2 = Float.parseFloat(exprs.get(i+1));
-                exprs.set(i, Float.toString(number1 / number2));
-                exprs.remove(i+1);
-                exprs.remove(i-1);
-            }
-            while ((i=exprs.indexOf("+")) != -1) {
-                number1 = Float.parseFloat(exprs.get(i-1));
-                number2 = Float.parseFloat(exprs.get(i+1));
-                exprs.set(i, Float.toString(number1 + number2));
-                exprs.remove(i+1);
-                exprs.remove(i-1);
-            }
-            while ((i=exprs.indexOf("-")) != -1) {
-                number1 = Float.parseFloat(exprs.get(i-1));
-                number2 = Float.parseFloat(exprs.get(i+1));
-                exprs.set(i, Float.toString(number1 - number2));
-                exprs.remove(i+1);
-                exprs.remove(i-1);
+
+            // if result is different of null, perform update array list
+            if(result!=null) {
+                exprs.set(i, Float.toString(result));
+                exprs.remove(i + 1);
+                exprs.remove(i - 1);
+                result = null;
             }
         }
 
-        /*switch(operator){
-            case '+':
-                displayText.setText(Float.toString(number1 + number2));
-                break;
-            case '-':
-                displayText.setText(Float.toString(number1-number2));
-                break;
-            case '×':
-                displayText.setText(Float.toString(number1*number2));
-                break;
-            case '÷':
-                if(number2 == 0)
-                    displayText.setText(DecimalFormatSymbols.getInstance().getInfinity());
-                else {
-                    displayText.setText(Float.toString(number1 / number2));
-                }
-                break;
-        }*/
-
+        // Check if result is a Interger
         result = Float.parseFloat(exprs.get(0));
-        if (result == (int)result) {
-            exprs.set(0, Integer.toString((int)result));
-        }
+        if (result == result.intValue()) {
+            exprs.set(0, Integer.toString(result.intValue()));
+        } else exprs.set(0, String.format("%.2f", result));
 
+        // Update display
         displayText.setText(exprs.get(0));
+
+        // update history
+        history.add(currentDisplay + " = " + exprs.get(0));
+
+        // update current display variable
         currentDisplay = exprs.get(0);
     }
 
     private ArrayList<String> treatExpressions(String[] exprs) {
         ArrayList<String> expr1 = new ArrayList<String>(Arrays.asList(exprs));
+        int size;
 
+        // Check and remove first empty element
         if(expr1.get(0).isEmpty())
             expr1.remove(0);
+
+        // Check if first element is a negative signal and concatenate it with the next elment
         if(expr1.get(0).equals("-")) {
             expr1.set(1, "-".concat(expr1.get(1)));
             expr1.remove(0);
         }
 
-        int size = expr1.size();
+        // Trim right unused operators
+        size = expr1.size();
+        while(operators.contains(expr1.get(size-1))){
+            expr1.remove(size-1);
+            size = expr1.size();
+        }
 
+        // Concatenate negative signal with the respective following number
         for(int i = expr1.indexOf("-"); i!=-1 && i<size; i++){
             String actual = expr1.get(i);
             String prev = expr1.get(i-1);
 
+            // if the element is a negative signal and the previous one is
+            // a operator for multiplication or division, concatenate it properly
             if(actual.equals("-") && (prev.equals("×") || prev.equals("÷"))){
                 expr1.set(i+1, actual.concat(expr1.get(i+1)));
                 expr1.remove(i);
@@ -177,6 +225,7 @@ public class MyActivity extends Activity {
             }
         }
 
+        // Return well formatted expressions
         return expr1;
     }
 

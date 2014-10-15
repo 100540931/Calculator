@@ -19,10 +19,10 @@
     <string name="sum">+</string>
     <string name="subtract">-</string>
     <string name="equal">=</string>
-    <string name="clear">C</string>
+    <string name="clear">Clear</string>
     <string name="parenthesesL">(</string>
     <string name="parenthesesR">)</string>
-    <string name="backspace">BS</string>
+    <string name="backspace">Delete</string>
     <string name="point">.</string>
 
 </resources>
