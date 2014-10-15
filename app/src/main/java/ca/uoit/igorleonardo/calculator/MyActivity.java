@@ -3,6 +3,8 @@ package ca.uoit.igorleonardo.calculator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,10 +29,11 @@ public class MyActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my);
+
         if (savedInstanceState != null) {
+            TextView displayText = (TextView) findViewById(R.id.display);
             currentDisplay = savedInstanceState.getString(currentDisplayTag);
-            TextView textView = (TextView) findViewById(R.id.display);
-            textView.setText(currentDisplay);
+            displayText.setText(currentDisplay);
             history = savedInstanceState.getStringArrayList(historyTag);
         }
     }
