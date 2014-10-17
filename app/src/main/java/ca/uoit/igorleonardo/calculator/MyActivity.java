@@ -22,10 +22,10 @@ import java.util.Arrays;
 public class MyActivity extends Activity {
 
     private String operators = "-+×÷";
-    private final String historyTag = "";
+    private final String historyTag = "historyTag";
     public ArrayList<String> history = new ArrayList<String>();
     private String currentDisplay = "";
-    private final String currentDisplayTag = "";
+    private final String currentDisplayTag = "currentDisplayTag";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,39 +81,52 @@ public class MyActivity extends Activity {
                 showCredits();
                 break;
             case R.id.action_quit:
-                finish();
+                showQuit();
                 break;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
+    private void showQuit() {
+        new AlertDialog.Builder(this)
+                .setIcon(R.drawable.ic_launcher)
+                .setTitle("Confirm Exit...")
+                .setMessage("Are you sure you want to close the Igor's Calculator?")
+                .setPositiveButton(getString(R.string.yes).toUpperCase(), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog,int which) {
+                        finish();
+                    }
+                })
+                .setNegativeButton(getString(R.string.no).toUpperCase(), null)
+                .show();
+    }
+
+
     private void showHistory() {
         final String[] items = history.toArray(new String[history.size()]);
 
         new AlertDialog.Builder(this)
-            .setTitle("History")
-            .setItems(items, new DialogInterface.OnClickListener(){
-                public void onClick(DialogInterface dialog, int item){
-                }
-            })
-            .setPositiveButton("Close", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                }
-            })
-            .show();
+                .setIcon(R.drawable.ic_launcher)
+                .setTitle("History")
+                .setItems(items, null)
+                .setPositiveButton(getString(R.string.close).toUpperCase(), null)
+                .show();
     }
 
     private void showCredits() {
         new AlertDialog.Builder(this)
-            .setTitle("Credits - Assignment 1")
-            .setMessage("CSCI4100U Mobile Devices\nApp: Calculator\n\nStudent: Igor Melo\nSID: 100540931")
-            .setPositiveButton("Close", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-
-                }
-            })
-            .show();
+                .setIcon(R.drawable.ic_launcher)
+                .setTitle("Credits")
+                .setMessage(
+                        getString(R.string.course)
+                        + "\n" + getString(R.string.assignment_no)
+                        + "\nApp: " + getString(R.string.app_name)
+                        + "\n\nStudent: " + getString(R.string.app_author)
+                        + "\nSID: " + getString(R.string.authors_sid)
+                )
+                .setNegativeButton(getString(R.string.close).toUpperCase(), null)
+                .show();
     }
 
     public void buttonPressed(View view) {
