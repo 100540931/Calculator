@@ -2,14 +2,21 @@ package ca.uoit.igorleonardo.calculator;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.os.Bundle;
+import android.text.Html;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.content.DialogInterface;
 
@@ -77,8 +84,8 @@ public class MyActivity extends Activity {
             case R.id.action_history:
                 showHistory();
                 break;
-            case R.id.action_credits:
-                showCredits();
+            case R.id.action_about:
+                showAbout();
                 break;
             case R.id.action_quit:
                 showQuit();
@@ -88,13 +95,49 @@ public class MyActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    public AlertDialog.Builder createDialog(final Context context, final LayoutInflater layoutInflater, final String title, final String content, final ArrayList<String> items) {
+        final View dialogView = layoutInflater.inflate(R.layout.dialog, null);
+        TextView dialogTitle = (TextView) dialogView.findViewById(R.id.textViewTitleDialog);
+        dialogTitle.setText(title);
+        TextView dialogContent = (TextView) dialogView.findViewById(R.id.textViewContentDialog);
+        final ListView dialogList = (ListView) dialogView.findViewById(R.id.listViewContentDialog);
+        if(content == null){
+            dialogContent.setVisibility(TextView.GONE);
+            ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                    context,
+                    android.R.layout.simple_list_item_1,
+                    items );
+
+            dialogList.setAdapter(arrayAdapter);
+            dialogList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                public void onItemClick(AdapterView<?> arg0, View v, int position, long id) {
+                    View displayView = findViewById(R.id.activity_my);
+                    String item = dialogList.getItemAtPosition(position).toString();
+                    TextView display = (TextView) displayView.findViewById(R.id.display);
+                    currentDisplay = (item.split(" = "))[0];
+                    display.setText(currentDisplay);
+
+                }
+            });
+        } else {
+            dialogList.setVisibility(ListView.GONE);
+            dialogContent.setText(Html.fromHtml(content), TextView.BufferType.SPANNABLE);
+        }
+        return new AlertDialog.Builder(context).setView(dialogView);
+    }
+
     private void showQuit() {
-        new AlertDialog.Builder(this)
-                .setIcon(R.drawable.ic_launcher)
-                .setTitle("Confirm Exit...")
-                .setMessage("Are you sure you want to close the Igor's Calculator?")
+        AlertDialog.Builder myDialog =
+                createDialog(
+                        this,
+                        getLayoutInflater(),
+                        "Confirm Exit...",
+                        "Are you sure you want to close the Igor's Calculator?",
+                        null
+                );
+        myDialog
                 .setPositiveButton(getString(R.string.yes).toUpperCase(), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog,int which) {
+                    public void onClick(DialogInterface dialog, int which) {
                         finish();
                     }
                 })
@@ -104,27 +147,36 @@ public class MyActivity extends Activity {
 
 
     private void showHistory() {
-        final String[] items = history.toArray(new String[history.size()]);
-
-        new AlertDialog.Builder(this)
-                .setIcon(R.drawable.ic_launcher)
-                .setTitle("History")
-                .setItems(items, null)
+        AlertDialog.Builder myDialog =
+                createDialog(
+                        this,
+                        getLayoutInflater(),
+                        "History",
+                        null,
+                        history
+                );
+        myDialog
                 .setPositiveButton(getString(R.string.close).toUpperCase(), null)
                 .show();
     }
 
-    private void showCredits() {
-        new AlertDialog.Builder(this)
-                .setIcon(R.drawable.ic_launcher)
-                .setTitle("Credits")
-                .setMessage(
-                        getString(R.string.course)
-                        + "\n" + getString(R.string.assignment_no)
-                        + "\nApp: " + getString(R.string.app_name)
-                        + "\n\nStudent: " + getString(R.string.app_author)
-                        + "\nSID: " + getString(R.string.authors_sid)
-                )
+    private void showAbout() {
+        String htmlMessage = "<p>This applications was created as a pre-requisite of my "
+                + "Mobile Device (CSCI 4100) course at UOIT. </p>"
+                + "<p>For this assignment I had to create a <b>simple Calculator</b> capable "
+                + "to solve all the <b>four basic operations</b>.</p>"
+                + "<p>Enjoy it!</p>"
+                + "<b>Igor Melo</b>, <i>100540931</i>";
+
+        AlertDialog.Builder myDialog =
+                createDialog(
+                        this,
+                        getLayoutInflater(),
+                        "About",
+                        htmlMessage,
+                        null
+                );
+        myDialog
                 .setNegativeButton(getString(R.string.close).toUpperCase(), null)
                 .show();
     }
