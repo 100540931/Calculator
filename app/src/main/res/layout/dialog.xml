@@ -62,19 +62,27 @@
         android:layout_gravity="center"
         android:gravity="center"
         android:orientation="vertical"
+        android:scrollbars="vertical"
+        android:isScrollContainer="true"
         tools:ignore="DisableBaselineAlignment" >
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingBottom="10dp"
-            android:paddingLeft="20dp"
-            android:paddingRight="20dp"
-            android:paddingTop="20dp"
-            android:text=""
-            android:textSize="15sp"
-            tools:ignore="HardcodedText"
-            android:id="@+id/textViewContentDialog" />
+        <ScrollView android:id="@+id/textAreaScroller"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="10dp"
+                    android:paddingLeft="20dp"
+                    android:paddingRight="20dp"
+                    android:paddingTop="20dp"
+                    android:text=""
+                    android:scrollbars="vertical"
+                    android:isScrollContainer="true"
+                    android:textSize="15sp"
+                    tools:ignore="HardcodedText"
+                    android:id="@+id/textViewContentDialog" />
+        </ScrollView>
 
     </LinearLayout>
 
